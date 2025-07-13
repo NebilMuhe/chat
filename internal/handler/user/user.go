@@ -67,7 +67,11 @@ func (u *user) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *user) GetDMHistory(w http.ResponseWriter, r *http.Request) {
-	user1 := r.Context().Value("user").(string)
+	user1, ok := r.Context().Value("user").(string)
+	if !ok {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
 	user2 := r.URL.Query().Get("user")
 	if user2 == "" {
 		http.Error(w, "missing user", http.StatusBadRequest)
@@ -79,6 +83,7 @@ func (u *user) GetDMHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(messages)
 }
 
@@ -95,5 +100,7 @@ func (u *user) SendDM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode("message sent successfully")
 }

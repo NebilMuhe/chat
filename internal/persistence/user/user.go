@@ -15,8 +15,6 @@ type user struct {
 	redisClient *redis.Client
 }
 
-
-
 func InitPersistence(redisClient *redis.Client) persistence.User {
 	return &user{
 		redisClient: redisClient,
@@ -68,7 +66,7 @@ func (u *user) GetUser(ctx context.Context, email string) (dto.SignUP, error) {
 }
 
 func (u *user) SendDM(ctx context.Context, message dto.DirectMessage) error {
-	message.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	message.Timestamp = time.Now().UTC()
 
 	data, err := json.Marshal(message)
 	if err != nil {
@@ -88,34 +86,21 @@ func (u *user) SendDM(ctx context.Context, message dto.DirectMessage) error {
 	return u.redisClient.Publish(ctx, pubChannel, data).Err()
 }
 
-
-func (u *user) ReceiveDM(ctx context.Context, userID string) {
-	subscriber := u.redisClient.Subscribe(ctx,"dm:"+userID)
-	ch := subscriber.Channel()
-	
-	for msg := range ch{
+func (u *user) GetDMHistory(ctx context.Context, user1, user2 string) ([]dto.DirectMessage, error) {
+	key := fmt.Sprintf("dm:%s:%s", user1, user2)
+	if user1 > user2 {
+		key = fmt.Sprintf("dm:%s:%s", user2, user1)
+	}
+	messages, err := u.redisClient.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	var result []dto.DirectMessage
+	for _, msg := range messages {
 		var dm dto.DirectMessage
-		if err := json.Unmarshal([]byte(msg.Payload),&dm); err != nil {
-			fmt.Println("data")
+		if err := json.Unmarshal([]byte(msg), &dm); err == nil {
+			result = append(result, dm)
 		}
 	}
-}
-
-func (u *user) GetDMHistory(ctx context.Context, user1, user2 string) ([]dto.DirectMessage, error) {
-    key := fmt.Sprintf("dm:%s:%s", user1, user2)
-    if user1 > user2 {
-        key = fmt.Sprintf("dm:%s:%s", user2, user1)
-    }
-    messages, err := u.redisClient.LRange(ctx, key, 0, -1).Result()
-    if err != nil {
-        return nil, err
-    }
-    var result []dto.DirectMessage
-    for _, msg := range messages {
-        var dm dto.DirectMessage
-        if err := json.Unmarshal([]byte(msg), &dm); err == nil {
-            result = append(result, dm)
-        }
-    }
-    return result, nil
+	return result, nil
 }

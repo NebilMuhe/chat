@@ -40,8 +40,46 @@ type LoginResponse struct {
 }
 
 type DirectMessage struct {
-	From      string `json:"from"`
-	To        string `json:"to"`
-	Text      string `json:"text"`
-	Timestamp string `json:"timestamp"`
+	From      string    `json:"from"`
+	To        string    `json:"to"`
+	Text      string    `json:"text"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+func (d DirectMessage) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.To, validation.Required),
+		validation.Field(&d.Text, validation.Required),
+	)
+}
+
+type Group struct {
+	GroupID   string `json:"group_id"`
+	GroupName string `json:"group_name"`
+	UserID    string `json:"user_id"`
+}
+
+type CreateGroup struct {
+	GroupID   string `json:"group_id"`
+	GroupName string `json:"group_name"`
+	UserID    string `json:"user_id"`
+}
+
+func (c CreateGroup) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.GroupName, validation.Required),
+	)
+}
+
+type GroupMessage struct {
+	Sender    string `json:"sender"`
+	GroupID   string `json:"group_id"`
+	Content   string `json:"content"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func (g GroupMessage) Validate() error {
+	return validation.ValidateStruct(&g,
+		validation.Field(&g.Content, validation.Required),
+	)
 }
