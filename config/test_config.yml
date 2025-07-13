@@ -1,0 +1,4 @@
+secret_key: mysecretkey123
+redis_url: localhost:6379
+password: ""
+port: 8000
