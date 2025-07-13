@@ -83,3 +83,12 @@ func (g GroupMessage) Validate() error {
 		validation.Field(&g.Content, validation.Required),
 	)
 }
+
+type AddMemeber struct {
+	GroupName string `json:"group_name"`
+	UserID    string `json:"user_id"`
+}
+
+type BroadCast struct{
+	Message string `json:"message"` 
+}
